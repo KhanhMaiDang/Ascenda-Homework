@@ -1,8 +1,6 @@
 package com.example.ascendahomework.model;
 
 import com.example.ascendahomework.utils.CustomDateDeserializer;
-import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.Getter;
@@ -31,19 +29,17 @@ public class Offer implements Serializable {
     @JsonDeserialize(using = CustomDateDeserializer.class)
     private LocalDate validTo;
 
-    public Offer shallowCopy(){
-        Offer newOffer = new Offer();
+    public Offer(){
+        super();
+    }
 
-        newOffer.id = this.id;
-        newOffer.title = this.title;
-        newOffer.description = this.description;
-        newOffer.category = this.category;
-        newOffer.validTo = this.validTo;
-        newOffer.merchants = new ArrayList<>();
-        for (Merchant m : this.merchants){
-            newOffer.merchants.add(m);
-        }
-        return newOffer;
+    public Offer(Long id, String title, String description, Integer category, ArrayList<Merchant> merchants, LocalDate validTo){
+        this. id = id;
+        this.title = title;
+        this.description = description;
+        this.category = category;
+        this.merchants = merchants;
+        this.validTo = validTo;
     }
 
     public boolean isValidUntil(LocalDate date){

@@ -12,10 +12,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.lang.reflect.Array;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -53,24 +56,12 @@ public class OfferServiceImp implements OfferService {
     }
 
     public ArrayList<Offer> filterOffer(LocalDate checkinDate, ArrayList<Offer> offers, int numberOfOffer){
-        ArrayList<Offer> offerArrayList = new ArrayList<>();
+        ArrayList<Offer> filteredOffer = offers.stream().filter(offer -> (offer.isValidUntil(checkinDate.plusDays(5)) && !offer.getCategory().equals(3)))
+                .map(o ->   new Offer(o.getId(),o.getTitle(), o.getDescription(), o.getCategory(),new ArrayList<>(List.of(o.findClosestMerchant())),o.getValidTo()))
+                .collect(Collectors.toCollection(ArrayList::new));
 
-        for (Offer offer: offers){
-            if (offer.isValidUntil(checkinDate.plusDays(5)) && offer.getCategory() != 3){
-
-
-                Offer newOffer = offer.shallowCopy();
-                Merchant closestMerchant = offer.findClosestMerchant();
-                ArrayList<Merchant> tmp = new ArrayList<>();
-                tmp.add(closestMerchant);
-                newOffer.setMerchants(tmp);
-
-                offerArrayList.add(newOffer);
-            }
-        }
-
-        offerArrayList.sort((o1, o2) -> {
-            if (o1.getCategory() == o2.getCategory()){
+        filteredOffer.sort((o1, o2) -> {
+            if (o1.getCategory().equals(o2.getCategory())){
                 Float d1 = o1.findClosestMerchant().getDistance();
                 Float d2 = o2.findClosestMerchant().getDistance();
                 return d1.compareTo(d2);
@@ -80,14 +71,16 @@ public class OfferServiceImp implements OfferService {
             }
         });
 
+
         Set<Integer> selectedCategory = new HashSet<>();
         ArrayList<Offer> result = new ArrayList<>();
         int index = 0;
 
-        while(numberOfOffer > 0 && index < offerArrayList.size()){ // number of offer may useful for the case of selecting any number of offers
-            if (!selectedCategory.contains(offerArrayList.get(index).getCategory())){
-                result.add(offerArrayList.get(index));
-                selectedCategory.add(offerArrayList.get(index).getCategory());
+        while(numberOfOffer > 0 && index < filteredOffer.size()){ // number of offer may useful for the case of selecting any number of offers
+            Offer o = filteredOffer.get(index);
+            if (!selectedCategory.contains(o.getCategory())){
+                result.add(o);
+                selectedCategory.add(o.getCategory());
                 --numberOfOffer;
             }
             ++index;
