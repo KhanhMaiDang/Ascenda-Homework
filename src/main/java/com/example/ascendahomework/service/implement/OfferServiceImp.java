@@ -29,14 +29,14 @@ public class OfferServiceImp implements OfferService {
     @Override
     public ArrayList<Offer> getNearByOffer(LocalDate checkinDate) throws JsonProcessingException{
         String url = "https://61c3deadf1af4a0017d990e7.mockapi.io/offers/near_by?lat=1.313492&lon=103.860359&rad=20";
-        ArrayList<Offer> offers = fetchExternalAPI(url);
+        ArrayList<Offer> offers = fetchOfferFromExternalAPI(url);
         offers = filterOffer(checkinDate,offers,2);
 
         return offers;
 
     }
 
-    public ArrayList<Offer> fetchExternalAPI(String url) throws JsonProcessingException {
+    private ArrayList<Offer> fetchOfferFromExternalAPI(String url) throws JsonProcessingException {
 
         ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
         JSONObject jsonObject = new JSONObject(response.getBody());
@@ -55,10 +55,16 @@ public class OfferServiceImp implements OfferService {
         return offerArrayList;
     }
 
-    public ArrayList<Offer> filterOffer(LocalDate checkinDate, ArrayList<Offer> offers, int numberOfOffer){
+    private ArrayList<Offer> filterOffer(LocalDate checkinDate, ArrayList<Offer> offers, int numberOfOffer){
         ArrayList<Offer> filteredOffer = offers.stream().filter(offer -> (offer.isValidUntil(checkinDate.plusDays(5)) && !offer.getCategory().equals(3)))
-                .map(o ->   new Offer(o.getId(),o.getTitle(), o.getDescription(), o.getCategory(),new ArrayList<>(List.of(o.findClosestMerchant())),o.getValidTo()))
+                .map(o ->   new Offer(o.getId(),
+                        o.getTitle(),
+                        o.getDescription(),
+                        o.getCategory(),
+                        new ArrayList<>(List.of(o.findClosestMerchant())),
+                        o.getValidTo()))
                 .collect(Collectors.toCollection(ArrayList::new));
+
 
         filteredOffer.sort((o1, o2) -> {
             if (o1.getCategory().equals(o2.getCategory())){
